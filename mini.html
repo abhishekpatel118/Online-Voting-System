@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Online Voting System</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont,
+          sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      }
+
+      .app {
+        width: min(960px, 100%);
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
+        padding: 2.5rem clamp(1.5rem, 4vw, 3rem);
+        display: grid;
+        gap: 2rem;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(1.8rem, 3vw, 2.4rem);
+        color: #111827;
+      }
+
+      .subtitle {
+        color: #6b7280;
+        margin-top: 0.4rem;
+      }
+
+      .candidates {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .candidate {
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        background: #fdfefe;
+        transition: border-color 0.2s ease, transform 0.2s ease;
+      }
+
+      .candidate:hover {
+        border-color: #2563eb;
+        transform: translateY(-4px);
+      }
+
+      .candidate h2 {
+        margin: 0;
+        font-size: 1.4rem;
+      }
+
+      .candidate p {
+        margin: 0;
+        color: #6b7280;
+        min-height: 3rem;
+      }
+
+      .candidate .candidate-name {
+        font-weight: 600;
+        color: #0f172a;
+      }
+
+      .candidate button {
+        margin-top: auto;
+        padding: 0.8rem 1rem;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: #2563eb;
+        color: #fff;
+        transition: background 0.2s ease, transform 0.2s ease;
+      }
+
+      .candidate button:active {
+        transform: scale(0.98);
+      }
+
+      .candidate button:disabled {
+        background: #cbd5f5;
+        cursor: not-allowed;
+        color: #1e3a8a;
+      }
+
+      .candidate[data-party="abvp"] {
+        background: #fff7ed;
+        border-color: #fb923c;
+      }
+
+      .candidate[data-party="abvp"] h2 {
+        color: #c2410c;
+      }
+
+      .candidate[data-party="abvp"] button {
+        background: #ea580c;
+      }
+
+      .candidate[data-party="nsui"] {
+        background: linear-gradient(135deg, #eff6ff 55%, #e0f2fe 100%);
+        border-color: #3b82f6;
+      }
+
+      .candidate[data-party="nsui"] h2 {
+        color: #1d4ed8;
+      }
+
+      .candidate[data-party="nsui"] button {
+        background: #2563eb;
+      }
+
+      .candidate[data-party="sfi"] {
+        background: #fee2e2;
+        border-color: #ef4444;
+      }
+
+      .candidate[data-party="sfi"] h2 {
+        color: #b91c1c;
+      }
+
+      .candidate[data-party="sfi"] button {
+        background: #dc2626;
+      }
+
+      .candidate[data-party="aap"] {
+        background: #ecfeff;
+        border-color: #06b6d4;
+      }
+
+      .candidate[data-party="aap"] h2 {
+        color: #0e7490;
+      }
+
+      .candidate[data-party="aap"] button {
+        background: #0891b2;
+      }
+
+      .candidate[data-party="nota"] {
+        background: #f1f5f9;
+        border-color: #94a3b8;
+      }
+
+      .candidate[data-party="nota"] h2 {
+        color: #0f172a;
+      }
+
+      .candidate[data-party="nota"] button {
+        background: #475569;
+      }
+
+      .vote-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.25rem;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .summary-card {
+        background: #f1f5f9;
+        padding: 1rem 1.3rem;
+        border-radius: 16px;
+        min-width: 240px;
+        flex: 1;
+      }
+
+      .summary-card strong {
+        display: block;
+        font-size: 1.2rem;
+        color: #0f172a;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        border-radius: 16px;
+        overflow: hidden;
+        background: #f8fafc;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 0.9rem 1rem;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      th {
+        background: #e2e8f0;
+        color: #0f172a;
+        font-size: 0.95rem;
+      }
+
+      tbody tr:last-child td {
+        border-bottom: none;
+      }
+
+      .winner {
+        color: #16a34a;
+        font-weight: 700;
+      }
+
+      .footer {
+        text-align: center;
+        color: #94a3b8;
+        font-size: 0.9rem;
+      }
+
+      @media (max-width: 640px) {
+        .vote-info {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <header>
+        <h1>Online Voting System</h1>
+        <p class="subtitle">Cast your vote for your favorite political party.</p>
+      </header>
+
+      <section class="summary-card" aria-labelledby="eligibilityTitle">
+        <strong id="eligibilityTitle">Voter Eligibility Criteria</strong>
+        <ul style="margin: 0.6rem 0 0; padding-left: 1.2rem; color: #475569">
+          <li>Must be 18 years or older</li>
+          <li>Registered member of the community</li>
+          <li>Can cast only one vote in this mock election</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Political Parties</h2>
+        <div class="candidates" id="candidateList"></div>
+      </section>
+
+      <section aria-live="polite" class="vote-info">
+        <div class="summary-card">
+          <strong id="totalVotes">0 total votes</strong>
+          <span id="activeMessage">Be the first to vote!</span>
+        </div>
+        <button id="resetBtn" class="candidate button" style="max-width: 200px">
+          Reset Votes
+        </button>
+      </section>
+
+      <section>
+        <h2>Live Results</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Political Party</th>
+              <th>Candidate</th>
+              <th>Votes</th>
+              <th>Share</th>
+            </tr>
+          </thead>
+          <tbody id="resultTable"></tbody>
+        </table>
+      </section>
+
+      <p class="footer">
+        * Votes are stored locally in your browser for demo purposes only.
+      </p>
+    </main>
+
+    <script>
+      const candidates = [
+        {
+          id: "candidate-a",
+          name: "ABVP",
+          party: "abvp",
+          nominee: "Aarav Mehta",
+          manifesto: "Advocates for student leadership, cultural pride, and nation-first policies.",
+        },
+        {
+          id: "candidate-b",
+          name: "NSUI",
+          party: "nsui",
+          nominee: "Simran Kaur",
+          manifesto: "Supports inclusive education, student welfare schemes, and democratic reforms.",
+        },
+        {
+          id: "candidate-c",
+          name: "SFI",
+          party: "sfi",
+          nominee: "Dev Mishra",
+          manifesto: "Prioritizes campus equality, affordable education, and secular values.",
+        },
+        {
+          id: "candidate-d",
+          name: "AAP",
+          party: "aap",
+          nominee: "Ira Saxena",
+          manifesto: "Focuses on anti-corruption drives, civic tech, and transparent administration.",
+        },
+        {
+          id: "candidate-e",
+          name: "NOTA",
+          party: "nota",
+          nominee: "No Candidate",
+          manifesto: "Express your dissent – select NOTA if none of the options appeal to you.",
+        },
+      ];
+
+      const STORAGE_KEY = "online-voting-demo";
+
+      const candidateList = document.getElementById("candidateList");
+      const totalVotesEl = document.getElementById("totalVotes");
+      const activeMessageEl = document.getElementById("activeMessage");
+      const resultTable = document.getElementById("resultTable");
+      const resetBtn = document.getElementById("resetBtn");
+
+      const loadVotes = () => {
+        const defaults = Object.fromEntries(
+          candidates.map((candidate) => [candidate.id, 0])
+        );
+        const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+        return stored ? { ...defaults, ...stored } : defaults;
+      };
+
+      const saveVotes = (votes) =>
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(votes));
+
+      const state = {
+        votes: loadVotes(),
+      };
+
+      const totalVotes = () =>
+        Object.values(state.votes).reduce((acc, curr) => acc + curr, 0);
+
+      const currentLeader = () => {
+        const maxVotes = Math.max(...Object.values(state.votes));
+        if (!maxVotes) return null;
+        const leaders = candidates.filter(
+          (candidate) => state.votes[candidate.id] === maxVotes
+        );
+        return leaders.map((leader) => leader.name).join(", ");
+      };
+
+      const formatPercent = (value) =>
+        `${(value * 100).toFixed(1).replace(".0", "")}%`;
+
+      const candidateNameLookup = Object.fromEntries(
+        candidates.map((candidate) => [candidate.id, candidate.name])
+      );
+
+      const renderCandidates = () => {
+        candidateList.innerHTML = candidates
+          .map(
+            (candidate) => `
+            <article class="candidate" data-id="${candidate.id}" data-party="${candidate.party}">
+              <h2>${candidate.name}</h2>
+              <p class="candidate-name">Candidate: ${candidate.nominee}</p>
+              <p>${candidate.manifesto}</p>
+              <button type="button" data-vote="${candidate.id}">
+                Vote for ${candidate.name}
+              </button>
+            </article>
+          `
+          )
+          .join("");
+      };
+
+      const renderResults = () => {
+        const votes = totalVotes();
+        totalVotesEl.textContent = `${votes} total vote${votes === 1 ? "" : "s"}`;
+        const leader = currentLeader();
+        activeMessageEl.textContent = leader
+          ? `Leading candidate: ${leader}`
+          : "Be the first to vote!";
+
+        resultTable.innerHTML = candidates
+          .map((candidate) => {
+            const count = state.votes[candidate.id] ?? 0;
+            const share = votes ? formatPercent(count / votes) : "0%";
+            const highlight =
+              leader && leader.includes(candidate.name) && !!count
+                ? "winner"
+                : "";
+            return `
+              <tr>
+                <td class="${highlight}">${candidate.name}</td>
+                <td>${candidate.nominee}</td>
+                <td>${count}</td>
+                <td>${share}</td>
+              </tr>
+            `;
+          })
+          .join("");
+      };
+
+      const handleVote = (candidateId) => {
+        state.votes[candidateId] = (state.votes[candidateId] || 0) + 1;
+        saveVotes(state.votes);
+        renderResults();
+      };
+
+      const wireEvents = () => {
+        candidateList.addEventListener("click", (event) => {
+          const button = event.target.closest("button[data-vote]");
+          if (!button) return;
+          handleVote(button.dataset.vote);
+          button.disabled = true;
+          button.textContent = "Vote counted!";
+          setTimeout(() => {
+            button.disabled = false;
+            button.textContent = `Vote for ${
+              candidateNameLookup[button.dataset.vote] || "Candidate"
+            }`;
+          }, 1200);
+        });
+
+        resetBtn.addEventListener("click", () => {
+          state.votes = Object.fromEntries(
+            candidates.map((candidate) => [candidate.id, 0])
+          );
+          saveVotes(state.votes);
+          renderResults();
+        });
+      };
+
+      renderCandidates();
+      renderResults();
+      wireEvents();
+    </script>
+  </body>
+</html>
+
